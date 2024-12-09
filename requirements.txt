@@ -91,5 +91,5 @@ virtualenv==20.19.0
 waitress==2.1.2
 wcwidth==0.2.6
 webdriver-manager==3.8.5
-Werkzeug==2.2.3
+Werkzeug==3.0.6
 wsproto==1.2.0
