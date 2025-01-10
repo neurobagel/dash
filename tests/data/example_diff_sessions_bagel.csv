@@ -1,5 +1,0 @@
-participant_id,session,has_mri_data,pipeline_name,pipeline_version,pipeline_starttime,pipeline_complete
-sub-01,1,True,freesurfer,6.0.1,2022-05-24 13:43,SUCCESS
-sub-01,2,True,freesurfer,6.0.1,2022-05-24 13:46,SUCCESS
-sub-02,1,True,freesurfer,6.0.1,2022-05-24 14:01,SUCCESS
-sub-02,3,True,freesurfer,6.0.1,2022-05-24 16:27,SUCCESS

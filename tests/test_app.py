@@ -18,13 +18,13 @@ def test_server(dash_duo):
     "valid_bagel,bagel_type,expected_elements,unexpected_elements",
     [
         (
-            "example_imaging_bagel.csv",
+            "example_imaging.tsv",
             "imaging",
             ["#fig-pipeline-status-all-ses"],
             ["#phenotypic-plotting-form"],
         ),
         (
-            "example_pheno_bagel.csv",
+            "example_phenotypic.tsv",
             "phenotypic",
             # TODO: Check specifically for a session filter form instead of #advanced-filter-form,
             # since latter is a larger container that also contains pipeline-specific dropdowns for imaging data
@@ -80,8 +80,8 @@ def test_002_upload_invalid_imaging_bagel(test_server, bagels_path):
     to reuse the same (function scoped) server instance.
     """
     invalid_input_output = {
-        "example_missing-col_bagel.csv": "missing the following required imaging metadata columns: {'pipeline_starttime'}",
-        "example_pheno_bagel.csv": "missing the following required imaging metadata columns",
+        "example_imaging_missing-col.tsv": "missing the following required imaging metadata columns: {'pipeline_step'}",
+        "example_phenotypic.tsv": "missing the following required imaging metadata columns",
     }
 
     upload = test_server.driver.find_element(
@@ -115,9 +115,7 @@ def test_003_upload_invalid_phenotypic_bagel(test_server, bagels_path):
     )
 
     upload.send_keys(
-        os.path.realpath(
-            os.path.join(bagels_path, "example_imaging_bagel.csv")
-        )
+        os.path.realpath(os.path.join(bagels_path, "example_imaging.tsv"))
     )
     test_server.wait_for_contains_text("#output-data-upload", err, timeout=4)
     assert err in test_server.find_element("#output-data-upload").text
@@ -139,7 +137,7 @@ def test_004_phenotypic_col_selection_generates_visualization(
         """//*[contains(@id,'"index":"phenotypic","type":"upload-data"')]/div/input""",
     )
     upload.send_keys(
-        os.path.realpath(os.path.join(bagels_path, "example_pheno_bagel.csv"))
+        os.path.realpath(os.path.join(bagels_path, "example_phenotypic.tsv"))
     )
 
     # Wait for dropdown container

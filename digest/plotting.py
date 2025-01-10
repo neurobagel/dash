@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from . import utility as util
+from .utility import PRIMARY_SESSION_COL
 
 CMAP = px.colors.qualitative.Bold
 STATUS_COLORS = {
@@ -37,7 +38,7 @@ def transform_active_data_to_long(data: pd.DataFrame) -> pd.DataFrame:
         data,
         id_vars=util.get_id_columns(data),
         var_name="pipeline_name",
-        value_name="pipeline_complete",
+        value_name="status",
     )
 
 
@@ -60,28 +61,28 @@ def plot_pipeline_status_by_participants(
 ) -> go.Figure:
     status_counts = (
         transform_active_data_to_long(data)
-        .groupby(["pipeline_name", "pipeline_complete", "session"])
+        .groupby(["pipeline_name", "status", PRIMARY_SESSION_COL])
         .size()
         .reset_index(name="participants")
     )
 
     fig = px.bar(
         status_counts,
-        x="session",
+        x=PRIMARY_SESSION_COL,
         y="participants",
-        color="pipeline_complete",
+        color="status",
         text_auto=True,
         facet_col="pipeline_name",
         category_orders={
-            "pipeline_complete": util.PIPE_COMPLETE_STATUS_SHORT_DESC.keys(),
-            "session": session_list,
+            "status": util.PIPE_COMPLETE_STATUS_SHORT_DESC.keys(),
+            PRIMARY_SESSION_COL: session_list,
         },
         color_discrete_map=STATUS_COLORS,
         labels={
             "pipeline_name": "Pipeline",
             "participants": "Participants (n)",
-            "pipeline_complete": "Processing status",
-            "session": "Session",
+            "status": "Processing status",
+            PRIMARY_SESSION_COL: "Session",
         },
         title="All participant pipeline statuses by session",
     )
@@ -97,10 +98,10 @@ def plot_pipeline_status_by_records(status_counts: pd.DataFrame) -> go.Figure:
         status_counts,
         x="pipeline_name",
         y="records",
-        color="pipeline_complete",
+        color="status",
         text_auto=True,
         category_orders={
-            "pipeline_complete": util.PIPE_COMPLETE_STATUS_SHORT_DESC.keys(),
+            "status": util.PIPE_COMPLETE_STATUS_SHORT_DESC.keys(),
             "pipeline_name": status_counts["pipeline_name"]
             .drop_duplicates()
             .sort_values(),
@@ -109,7 +110,7 @@ def plot_pipeline_status_by_records(status_counts: pd.DataFrame) -> go.Figure:
         labels={
             "pipeline_name": "Pipeline",
             "records": "Records (n)",
-            "pipeline_complete": "Processing status",
+            "status": "Processing status",
         },
         title="Pipeline statuses of records matching filter (default: all)",
     )
@@ -124,7 +125,7 @@ def populate_empty_records_pipeline_status_plot(
     """Returns dataframe of counts representing 0 matching records in the datatable, i.e., 0 records with each pipeline status."""
     status_counts = pd.DataFrame(
         list(product(pipelines, statuses)),
-        columns=["pipeline_name", "pipeline_complete"],
+        columns=["pipeline_name", "status"],
     )
     status_counts["records"] = 0
 

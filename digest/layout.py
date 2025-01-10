@@ -101,7 +101,7 @@ def upload_buttons() -> list:
     upload_imaging = dcc.Upload(
         id={"type": "upload-data", "index": "imaging", "btn_idx": 0},
         children=dbc.Button(
-            "Select imaging CSV file...",
+            "Select imaging TSV file...",
             color="light",
         ),
         multiple=False,
@@ -110,7 +110,7 @@ def upload_buttons() -> list:
     upload_phenotypic = dcc.Upload(
         id={"type": "upload-data", "index": "phenotypic", "btn_idx": 1},
         children=dbc.Button(
-            "Select phenotypic CSV file...",
+            "Select phenotypic TSV file...",
             color="light",
         ),
         multiple=False,
@@ -266,7 +266,7 @@ def status_legend_card():
                                     "These are the recommended status definitions for processing progress. For more details, see the ",
                                     html.A(
                                         "schema for an imaging digest file",
-                                        href="https://github.com/neurobagel/digest/blob/main/schemas/bagel_schema.json",
+                                        href="https://github.com/neurobagel/digest/blob/main/schemas/imaging_digest_schema.json",
                                         target="_blank",
                                     ),
                                 ],

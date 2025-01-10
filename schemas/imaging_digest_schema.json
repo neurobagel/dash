@@ -1,0 +1,57 @@
+{
+    "GLOBAL_COLUMNS": {
+        "participant_id": {
+            "Description": "Participant identifier.", 
+            "dtype": "str",
+            "IsRequired": true
+        },
+        "bids_participant_id": {
+            "Description": "BIDS-compliant participant identifier.",
+            "dtype": "str",
+            "IsRequired": false
+        },
+        "session_id": {
+            "Description": "Session identifier.", 
+            "dtype": "str",
+            "IsRequired": true
+        },
+        "bids_session_id": {
+            "Description": "BIDS-compliant session identifier.", 
+            "dtype": "str",
+            "IsRequired": false
+        },
+        "pipeline_name": {
+            "Description": "Name of the pipeline that was run.",
+            "dtype": "str",
+            "IsRequired": true
+        },     
+        "pipeline_version": {
+            "description": "Version of the pipeline that was run. Must have a value if the value for 'pipeline_name' is not 'UNAVAILABLE'.",
+            "dtype": "str",
+            "IsRequired": true
+        },
+        "pipeline_starttime": {
+            "Description": "Date/time that pipeline run was started. In format of 'YYYY-MM-DD HH:MM:SS'.",
+            "dtype": "str",
+            "IsRequired": false
+        },
+        "pipeline_endtime": {
+            "Description": "Date/time that pipeline run ended. In format of 'YYYY-MM-DD HH:MM:SS'.",
+            "dtype": "str",
+            "IsRequired": false
+        }
+    },
+    "PIPELINE_STATUS_COLUMNS": {
+        "pipeline_step": {
+            "Description": "Name of a specific step in a pipeline.",
+            "dtype": "str",
+            "IsRequired": true
+        },
+        "status": {
+            "Description": "Completion status of the pipeline run or step for the subject-session pair. 'SUCCESS': All output files are present. 'FAIL': At least one output file is missing. 'INCOMPLETE': Pipeline has not been run for the subject session. 'UNAVAILABLE': Relevant MRI modality for pipeline not available for subject session.",
+            "dtype": "str",
+            "IsRequired": true,
+            "Range": ["SUCCESS", "FAIL", "INCOMPLETE", "UNAVAILABLE", ""]
+        }
+    }
+}

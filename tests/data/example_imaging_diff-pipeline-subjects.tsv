@@ -1,0 +1,17 @@
+participant_id	session_id	pipeline_name	pipeline_version	pipeline_starttime	pipeline_step	status
+sub-01	1	freesurfer	6.0.1	2022-05-24 13:43	default	SUCCESS
+sub-01	2	freesurfer	6.0.1	2022-05-24 13:46	default	SUCCESS
+sub-02	1	freesurfer	6.0.1	2022-05-24 14:01	default	SUCCESS
+sub-02	2	freesurfer	6.0.1	2022-05-24 16:27	default	SUCCESS
+sub-01	1	freesurfer	7.3.2	2022-09-24 13:43	default	SUCCESS
+sub-01	2	freesurfer	7.3.2		default	UNAVAILABLE
+sub-02	1	freesurfer	7.3.2	2022-09-24 14:01	default	SUCCESS
+sub-02	2	freesurfer	7.3.2		default	UNAVAILABLE
+sub-03	1	freesurfer	7.3.2	2022-09-24 17:07	default	SUCCESS
+sub-03	2	freesurfer	7.3.2		default	UNAVAILABLE
+sub-01	1	fmriprep	20.2.7		default	UNAVAILABLE
+sub-01	2	fmriprep	20.2.7		default	UNAVAILABLE
+sub-02	1	fmriprep	20.2.7	2022-05-24 16:26	default	SUCCESS
+sub-02	2	fmriprep	20.2.7	2022-05-24 16:26	default	SUCCESS
+sub-03	1	fmriprep	20.2.7	2022-05-24 16:26	default	SUCCESS
+sub-03	2	fmriprep	20.2.7	2022-05-24 16:33	default	SUCCESS

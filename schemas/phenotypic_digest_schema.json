@@ -1,55 +1,47 @@
 {
     "GLOBAL_COLUMNS": {
         "participant_id": {
-            "Description": "Participant identifier within a given dataset.", 
+            "Description": "Participant identifier.", 
             "dtype": "str",
-            "IsRequired": true,
-            "IsPrefixedColumn": false
+            "IsRequired": true
         },
-        "bids_id": {
-            "Description": "BIDS dataset identifier for a participant, if available/different from the participant_id.", 
+        "bids_participant_id": {
+            "Description": "BIDS-compliant participant identifier.", 
             "dtype": "str",
-            "IsRequired": false,
-            "IsPrefixedColumn": false
+            "IsRequired": false
         },
-        "session": {
-            "Description": "Participant session ID.", 
+        "session_id": {
+            "Description": "Participant session identifier.", 
             "dtype": "str",
-            "IsRequired": true,
-            "IsPrefixedColumn": false
+            "IsRequired": true
         },
         "has_mri_data": {
             "Description": "Whether or not participant had MRI data acquired in a given session.",
             "dtype": "bool",
             "IsRequired": false,
-            "Range": [true, false],
-            "IsPrefixedColumn": false
+            "Range": [true, false]
         },
         "assessment_name": {
             "Description": "Name of an assessment or subscale completed by the participant.",
             "dtype": "str",
-            "IsRequired": true,
-            "IsPrefixedColumn": false
+            "IsRequired": true
         },     
         "assessment_version": {
             "Description": "Version of assessment. Should be defined if more than one assessment of the same name is present.",
             "dtype": "str",
-            "IsRequired": false,
-            "IsPrefixedColumn": false
+            "IsRequired": false
         },
         "assessment_datetime": {
             "Description": "Date/time that assessment was completed. In format of 'YYYY-MM-DD HH:MM:SS'.",
             "dtype": "str",
-            "IsRequired": false,
-            "IsPrefixedColumn": false
+            "IsRequired": false
         }
     },
     "ASSESSMENT_SPECIFIC_COLUMNS": {
         "assessment_score": {
             "Description": "Score of a given participant corresponding to an assessment.",
             "dtype": "str",
-            "IsRequired": true,
-            "IsPrefixedColumn": false
+            "IsRequired": true
         }
     }
 }

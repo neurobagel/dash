@@ -10,20 +10,23 @@ import pandas as pd
 SCHEMAS_PATH = Path(__file__).absolute().parents[1] / "schemas"
 BAGEL_CONFIG = {
     "imaging": {
-        "schema_file": "bagel_schema.json",
-        "overview_col": "pipeline_complete",
+        "schema_file": "imaging_digest_schema.json",
+        "overview_col": "status",
     },
     "phenotypic": {
-        "schema_file": "bagel_schema_pheno.json",
+        "schema_file": "phenotypic_digest_schema.json",
         "overview_col": "assessment_score",
     },
 }
+# TODO: Update
 PIPE_COMPLETE_STATUS_SHORT_DESC = {
     "SUCCESS": "All expected output files of pipeline are present.",
     "FAIL": "At least one expected output of pipeline is missing.",
     "INCOMPLETE": "Pipeline has not yet been run (output directory not available).",
     "UNAVAILABLE": "Relevant MRI modality for pipeline not available.",
 }
+# Column to use as the primary session identifier in the data
+PRIMARY_SESSION_COL = "session_id"
 
 # TODO:
 # Could also use URLs for "imaging" or "phenotypic" locations if fetching from a remote repo doesn't slow things down too much.
@@ -36,12 +39,12 @@ PUBLIC_DIGEST_FILE_PATHS = {
         / "nipoppy-qpn"
         / "nipoppy"
         / "digest"
-        / "qpn_imaging_availability_digest.csv",
+        / "qpn_imaging_availability_digest.tsv",
         "phenotypic": Path(__file__).absolute().parents[2]
         / "nipoppy-qpn"
         / "nipoppy"
         / "digest"
-        / "qpn_tabular_availability_digest.csv",
+        / "qpn_tabular_availability_digest.tsv",
     }
 }
 
@@ -59,7 +62,9 @@ def reset_column_dtypes(data: pd.DataFrame) -> pd.DataFrame:
     stream.close()
 
     # Just in case, convert session labels back to strings (will avoid sessions being undesirably treated as continuous data in e.g., plots)
-    data_retyped["session"] = data_retyped["session"].astype(str)
+    data_retyped[PRIMARY_SESSION_COL] = data_retyped[
+        PRIMARY_SESSION_COL
+    ].astype(str)
     return data_retyped
 
 
@@ -91,7 +96,7 @@ def construct_summary_str(data: pd.DataFrame) -> str:
     """Creates summary of key counts for dataset."""
     return f"""Total number of participants: {count_unique_subjects(data)}
 Total number of unique records (participant-session pairs): {count_unique_records(data)}
-Total number of unique sessions: {data["session"].nunique()}"""
+Total number of unique sessions: {data[PRIMARY_SESSION_COL].nunique()}"""
 
 
 def get_required_bagel_columns(schema_file: str) -> list:
@@ -126,7 +131,7 @@ def get_event_id_columns(
     When there is only one relevant column, we return a string instead of a list to avoid grouper problems when the column name is used in pandas groupby.
     """
     if schema == "imaging":
-        return ["pipeline_name", "pipeline_version"]
+        return ["pipeline_name", "pipeline_version", "pipeline_step"]
     if schema == "phenotypic":
         return (
             ["assessment_name", "assessment_version"]
@@ -136,11 +141,11 @@ def get_event_id_columns(
     return None
 
 
+# TODO: Generalize function and variable names to include both assessments and pipelines (e.g., extract_events?)
 def extract_pipelines(bagel: pd.DataFrame, schema: str) -> dict:
-    """Get data for each unique pipeline in the aggregate input as an individual labelled dataframe."""
+    """Get rows corresponding to each unique data "event" (i.e., pipeline or assessment) in the input file as an individual labelled dataframe."""
     pipelines_dict = {}
-
-    # TODO: Possibly temporary fix - to avoid related assessment columns from being out of order
+    # Avoid related assessment columns from being out of order
     sort = bool(schema == "imaging")
 
     groupby = get_event_id_columns(bagel, schema)
@@ -148,8 +153,9 @@ def extract_pipelines(bagel: pd.DataFrame, schema: str) -> dict:
     pipelines = bagel.groupby(by=groupby, sort=sort)
 
     if isinstance(groupby, list):
-        for (name, version), pipeline in pipelines:
-            label = f"{name}-{version}"
+        for pipeline_ids, pipeline in pipelines:
+            # Construct a unique identifier for the pipeline/assessment
+            label = "-".join(pipeline_ids)
             # per pipeline, sort by participant_id (not sorting by session_id here to avoid disrupting chronological order)
             pipelines_dict[label] = (
                 pipeline.sort_values(["participant_id"])
@@ -170,12 +176,19 @@ def extract_pipelines(bagel: pd.DataFrame, schema: str) -> dict:
 
 
 def get_id_columns(data: pd.DataFrame) -> list:
-    """Returns names of columns which identify a given participant record"""
-    return (
-        ["participant_id", "bids_id", "session"]
-        if "bids_id" in data.columns
-        else ["participant_id", "session"]
-    )
+    """Returns names of columns found in the uploaded data which identify a given participant record."""
+    reference_id_cols = [
+        "participant_id",
+        "bids_participant_id",
+        "session_id",
+        "bids_session_id",
+    ]
+    # Preserve order of appearance in the original tabular data
+    recognized_id_cols = [
+        col for col in data.columns if col in reference_id_cols
+    ]
+
+    return recognized_id_cols
 
 
 def get_duplicate_entries(data: pd.DataFrame, subset: list) -> pd.DataFrame:
@@ -193,11 +206,16 @@ def count_unique_subjects(data: pd.DataFrame) -> int:
 
 def count_unique_records(data: pd.DataFrame) -> int:
     """Returns number of unique participant-session pairs."""
-    if set(["participant_id", "session"]).issubset(data.columns):
-        return data[["participant_id", "session"]].drop_duplicates().shape[0]
+    if set(["participant_id", PRIMARY_SESSION_COL]).issubset(data.columns):
+        return (
+            data[["participant_id", PRIMARY_SESSION_COL]]
+            .drop_duplicates()
+            .shape[0]
+        )
     return 0
 
 
+# TODO: Generalize function and variable names to include both assessments and pipelines
 def get_pipelines_overview(bagel: pd.DataFrame, schema: str) -> pd.DataFrame:
     """
     Constructs a wide format dataframe from the long format input file,
@@ -210,6 +228,7 @@ def get_pipelines_overview(bagel: pd.DataFrame, schema: str) -> pd.DataFrame:
     # Related issues:
     # https://github.com/pandas-dev/pandas/issues/21969
     # https://github.com/pandas-dev/pandas/issues/17595
+    # TODO: Rename variable to reflect renaming of "pipeline_complete" column
     pipeline_complete_df = bagel.pivot(
         index=get_id_columns(bagel),
         columns=get_event_id_columns(bagel, schema),
@@ -229,9 +248,10 @@ def get_pipelines_overview(bagel: pd.DataFrame, schema: str) -> pd.DataFrame:
     pipeline_complete_df = (
         # Enforce original order of sessions as they appear in input (pivot automatically sorts them)
         #   NOTE: .reindex only works correctly when there are no NaN values in the index level
-        #   (Here, the entire "session" column should have already been cast to a string)
+        #   (Here, the entire "session_id" column should have already been cast to a string)
         pipeline_complete_df.reindex(
-            index=bagel["session"].unique(), level="session"
+            index=bagel[PRIMARY_SESSION_COL].unique(),
+            level=PRIMARY_SESSION_COL,
         )
         .reindex(col_order, axis=1)  # reorder assessments/pipelines if needed
         .reset_index()
@@ -244,31 +264,31 @@ def get_pipelines_overview(bagel: pd.DataFrame, schema: str) -> pd.DataFrame:
 def load_file_from_path(
     file_path: Path,
 ) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
-    """Reads in a CSV file (if it exists) and returns it as a dataframe."""
+    """Reads in a TSV file (if it exists) and returns it as a dataframe."""
     if not file_path.exists():
         return None, "File not found."
 
-    bagel = pd.read_csv(file_path)
+    bagel = pd.read_tsv(file_path, sep="\t")
     return bagel, None
 
 
 def load_file_from_contents(
     filename: str, contents: str
 ) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
-    """Returns contents of an uploaded CSV file as a dataframe."""
-    if not filename.endswith(".csv"):
-        return None, "Invalid file type. Please upload a .csv file."
+    """Returns contents of an uploaded TSV file as a dataframe."""
+    if not filename.endswith(".tsv"):
+        return None, "Invalid file type. Please upload a .tsv file."
 
     content_type, content_string = contents.split(",")
     decoded = base64.b64decode(content_string)
-    bagel = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+    bagel = pd.read_csv(io.StringIO(decoded.decode("utf-8")), sep="\t")
     return bagel, None
 
 
 def get_schema_validation_errors(
     bagel: pd.DataFrame, schema: str
 ) -> Optional[str]:
-    """Checks that the input CSV adheres to the schema for the selected bagel type. If not, returns an informative error message as a string."""
+    """Checks that the input file adheres to the schema for the selected bagel type. If not, returns an informative error message as a string."""
     error_msg = None
 
     # Get the columns that uniquely identify a participant-session's value for an event,
@@ -287,7 +307,7 @@ def get_schema_validation_errors(
         )
         > 0
     ):
-        error_msg = f"The selected CSV is missing the following required {schema} metadata columns: {missing_req_cols}. Please try again."
+        error_msg = f"The selected TSV is missing the following required {schema} metadata columns: {missing_req_cols}. Please try again."
     elif (
         get_duplicate_entries(
             data=bagel, subset=unique_value_id_columns
@@ -295,7 +315,7 @@ def get_schema_validation_errors(
         > 0
     ):
         # TODO: Switch to warning once alerts are implemented for errors?
-        error_msg = f"The selected CSV contains duplicate entries in the combination of: {unique_value_id_columns}. Please double check your input."
+        error_msg = f"The selected TSV contains duplicate entries in the combination of: {unique_value_id_columns}. Please double check your input."
 
     return error_msg
 
@@ -329,23 +349,25 @@ def filter_records(
         matching_subs = []
         for sub_id, sub in data.groupby("participant_id"):
             if all(
-                session in sub["session"].unique()
+                session in sub[PRIMARY_SESSION_COL].unique()
                 for session in session_values
             ):
                 if all(
                     not sub.query(
                         " and ".join(
-                            [f"session == '{session}'"] + pipeline_queries
+                            [f"{PRIMARY_SESSION_COL} == '{session}'"]
+                            + pipeline_queries
                         )
                     ).empty
                     for session in session_values
                 ):
                     matching_subs.append(sub_id)
-        query = f"participant_id in {matching_subs} and session in {session_values}"
+        query = f"participant_id in {matching_subs} and {PRIMARY_SESSION_COL} in {session_values}"
     else:
         if operator_value == "OR":
             query = " and ".join(
-                [f"session in {session_values}"] + pipeline_queries
+                [f"{PRIMARY_SESSION_COL} in {session_values}"]
+                + pipeline_queries
             )
 
     data = data.query(query)

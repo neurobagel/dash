@@ -1,0 +1,5 @@
+participant_id	session_id	pipeline_name	pipeline_version	pipeline_starttime	pipeline_step	status
+sub-01	1	freesurfer	6.0.1	2022-05-24 13:43	default	SUCCESS
+sub-01	2	freesurfer	6.0.1	2022-05-24 13:46	default	SUCCESS
+sub-02	1	freesurfer	6.0.1	2022-05-24 14:01	default	SUCCESS
+sub-02	3	freesurfer	6.0.1	2022-05-24 16:27	default	SUCCESS
